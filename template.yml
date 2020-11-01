@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: BuildNo is {BuildNo}.
+
+Globals:
+  Function:
+    Runtime: dotnetcore3.1
+    CodeUri: s3://(Input Your Bucket Name)/{FileName}
+    Timeout: 15
+    MemorySize: 128
+
+Resources:
+  NetCore:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: NetCore::NetCore.Function::FunctionHandler
+      Role: (Input Your Role arn)

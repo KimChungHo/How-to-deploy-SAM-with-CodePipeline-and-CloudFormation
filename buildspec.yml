@@ -1,0 +1,39 @@
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  install:
+    runtime-versions:
+      dotnet: 3.1
+    commands:
+      - dotnet tool install -g Amazon.Lambda.Tools
+      - export FILE_NAME="NetCore.$CODEBUILD_BUILD_NUMBER.zip"
+      - sed
+        -e "s/{BuildNo}/$CODEBUILD_BUILD_NUMBER/g"
+        -e "s/{FileName}/$FILE_NAME/g"
+        template.yml > tmp_template.yml
+      - mv tmp_template.yml template.yml
+  pre_build:
+    commands:
+      - dotnet restore NetCore/NetCore.csproj
+      - sam package --template-file template.yml
+        --s3-bucket (Input Your Bucket Name)
+        --output-template-file outputtemplate.yml
+  build:
+    commands:
+      - dotnet build -c Release NetCore/NetCore.csproj
+  post_build:
+    commands:
+      - dotnet lambda package
+        --configuration release
+        --framework netcoreapp3.1
+        --project-location NetCore/
+        -o $FILE_NAME
+      - aws s3 cp $FILE_NAME s3://(Input Your Bucket Name)/$FILE_NAME
+artifacts:
+  type: zip
+  files:
+    - template.yml
+    - outputtemplate.yml
